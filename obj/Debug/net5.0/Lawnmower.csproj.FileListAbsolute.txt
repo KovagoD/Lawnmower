@@ -1,0 +1,16 @@
+C:\Development\Lawnmower\Lawnmower\bin\Debug\net5.0\Lawnmower.exe
+C:\Development\Lawnmower\Lawnmower\bin\Debug\net5.0\Lawnmower.deps.json
+C:\Development\Lawnmower\Lawnmower\bin\Debug\net5.0\Lawnmower.runtimeconfig.json
+C:\Development\Lawnmower\Lawnmower\bin\Debug\net5.0\Lawnmower.runtimeconfig.dev.json
+C:\Development\Lawnmower\Lawnmower\bin\Debug\net5.0\Lawnmower.dll
+C:\Development\Lawnmower\Lawnmower\bin\Debug\net5.0\Lawnmower.pdb
+C:\Development\Lawnmower\Lawnmower\obj\Debug\net5.0\Lawnmower.csproj.AssemblyReference.cache
+C:\Development\Lawnmower\Lawnmower\obj\Debug\net5.0\Lawnmower.GeneratedMSBuildEditorConfig.editorconfig
+C:\Development\Lawnmower\Lawnmower\obj\Debug\net5.0\Lawnmower.AssemblyInfoInputs.cache
+C:\Development\Lawnmower\Lawnmower\obj\Debug\net5.0\Lawnmower.AssemblyInfo.cs
+C:\Development\Lawnmower\Lawnmower\obj\Debug\net5.0\Lawnmower.csproj.CoreCompileInputs.cache
+C:\Development\Lawnmower\Lawnmower\obj\Debug\net5.0\Lawnmower.dll
+C:\Development\Lawnmower\Lawnmower\obj\Debug\net5.0\refint\Lawnmower.dll
+C:\Development\Lawnmower\Lawnmower\obj\Debug\net5.0\Lawnmower.pdb
+C:\Development\Lawnmower\Lawnmower\obj\Debug\net5.0\Lawnmower.genruntimeconfig.cache
+C:\Development\Lawnmower\Lawnmower\obj\Debug\net5.0\ref\Lawnmower.dll
