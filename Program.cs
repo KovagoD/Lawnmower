@@ -34,7 +34,7 @@ namespace Lawnmower
 
     class Lawnmower : Terrain
     {
-        public int[] lastCoordinates;
+        public int[] lastCoordinates = new int[] { 0, 0 };
         public Lawnmower(TerrainType terrainType, int[] coordinates) : base(terrainType, coordinates)
         {
         }
@@ -46,62 +46,54 @@ namespace Lawnmower
 
         public Lawnmower MoveLawnmower(Terrain[,] terrain, int[] targetCoordinates)
         {
+            lastCoordinates = coordinates;
             terrain[coordinates[0], coordinates[1]] = new Terrain(TerrainType.Grass, coordinates);
             terrain[coordinates[0], coordinates[1]].isMowed = true;
 
             terrain[targetCoordinates[0], targetCoordinates[1]] = this;
             terrain[targetCoordinates[0], targetCoordinates[1]].coordinates = targetCoordinates;
+
             return (Lawnmower)terrain[targetCoordinates[0], targetCoordinates[1]];
         }
 
         public int[] FindPath(Terrain[,] terrain)
         {
-            lastCoordinates = coordinates;
             int currentX = coordinates[0];
             int currentY = coordinates[1];
 
+            int[] closestGrassCoordinates = FindClosestGrass(terrain);
+            if (closestGrassCoordinates != null)
+            {
+                List<int[]> availablePaths = new List<int[]>();
 
+                if (closestGrassCoordinates[0] > currentX && terrain[currentX + 1, currentY].isMowable()) { availablePaths.Add(new int[] { currentX + 1, currentY }); } //down
+                if (closestGrassCoordinates[0] < currentX && terrain[currentX - 1, currentY].isMowable()) { availablePaths.Add(new int[] { currentX - 1, currentY }); } // up
+                if (closestGrassCoordinates[1] > currentY && terrain[currentX, currentY + 1].isMowable()) { availablePaths.Add(new int[] { currentX, currentY + 1 }); } // right
+                if (closestGrassCoordinates[1] < currentY && terrain[currentX, currentY - 1].isMowable()) { availablePaths.Add(new int[] { currentX, currentY - 1 }); } // left
 
-            /*
-            if (terrain[currentX, currentY + 1].isMowable() && !terrain[currentX, currentY + 1].isMowed)
-            {
-                return new int[] { currentX, currentY + 1 };
-            }
-            else if (terrain[currentX, currentY - 1].isMowable() && !terrain[currentX, currentY - 1].isMowed)
-            {
-                return new int[] { currentX, currentY - 1 };
-            }
-            else if (terrain[currentX + 1, currentY].isMowable() && !terrain[currentX + 1, currentY].isMowed)
-            {
-                return new int[] { currentX + 1, currentY };
-            }
-            else if (terrain[currentX - 1, currentY].isMowable() && !terrain[currentX - 1, currentY].isMowed)
-            {
-                return new int[] { currentX - 1, currentY };
-            }
-            */
-             
-            /*
-            else if (terrain[currentX, currentY + 1].isMowable() && lastCoordinates != new int[] { currentX, currentY + 1 })
-            {
-                return new int[] { currentX, currentY + 1 };
-            }
-            else if (terrain[currentX, currentY - 1].isMowable() && lastCoordinates != new int[] { currentX, currentY - 1 })
-            {
-                return new int[] { currentX, currentY - 1 };
-            }
-            else if (terrain[currentX + 1, currentY].isMowable() && lastCoordinates != new int[] { currentX + 1, currentY })
-            {
-                return new int[] { currentX + 1, currentY };
-            }
-            else if (terrain[currentX - 1, currentY].isMowable() && lastCoordinates != new int[] { currentX - 1, currentY })
-            {
-                return new int[] { currentX - 1, currentY };
-            }
-            */
+                if (availablePaths.Count < 1)
+                {
+                    if (terrain[currentX + 1, currentY].isMowable()) { availablePaths.Add(new int[] { currentX + 1, currentY }); }
+                    if (terrain[currentX - 1, currentY].isMowable()) { availablePaths.Add(new int[] { currentX - 1, currentY }); }
+                    if (terrain[currentX, currentY + 1].isMowable()) { availablePaths.Add(new int[] { currentX, currentY + 1 }); }
+                    if (terrain[currentX, currentY - 1].isMowable()) { availablePaths.Add(new int[] { currentX, currentY - 1 }); }
+                }
 
+                /*
+                //Console.WriteLine("\n\n---CLOSEST: " + closestGrassCoordinates[0] + "," + closestGrassCoordinates[1]);
+                Console.WriteLine("available paths:");
+                if (availablePaths.Count > 1) { availablePaths.Remove(lastCoordinates); }
 
-            return new int[] {1,1};
+                foreach (var item in availablePaths)
+                {
+                    Console.WriteLine("\tpath: " + item[0] + "," + item[1]);
+                }
+                */
+
+                Random r = new Random();
+                return availablePaths.Count > 0 ? availablePaths[r.Next(0, availablePaths.Count)] : null;
+            }
+            return null;
         }
 
         public int[] FindClosestGrass(Terrain[,] terrain)
@@ -114,7 +106,7 @@ namespace Lawnmower
             {
                 for (int y = 0; y < terrain.GetLength(1); y++)
                 {
-                    if (terrain[x, y].terrainType == TerrainType.Grass && !terrain[x,y].isMowed)
+                    if (terrain[x, y].terrainType == TerrainType.Grass && !terrain[x, y].isMowed)
                     {
                         grassTerrain.Add(terrain[x, y]);
                     }
@@ -122,33 +114,33 @@ namespace Lawnmower
             }
 
             Terrain closestGrass = null;
-            int diff = int.MaxValue;
+            double diff = int.MaxValue;
 
             for (int i = 0; i < grassTerrain.Count; i++)
             {
-                if (Math.Abs(grassTerrain[i].coordinates[0] - currentX) < diff)
+                double tmp = Math.Pow(grassTerrain[i].coordinates[0] - currentX, 2) + Math.Pow(grassTerrain[i].coordinates[1] - currentY, 2);
+                if (tmp <= diff)
                 {
-                    diff = Math.Abs(grassTerrain[i].coordinates[0] - currentX);
-                    closestGrass = grassTerrain[i];
-                }
-                else if (Math.Abs(grassTerrain[i].coordinates[1] - currentY) < diff)
-                {
-                    diff = Math.Abs(grassTerrain[i].coordinates[1] - currentY);
+                    diff = tmp;
                     closestGrass = grassTerrain[i];
                 }
             }
+
+            /*
+            Console.WriteLine(diff + " legjobb érték");
 
             //stats
-            Console.WriteLine("current pos: "+currentX +","+currentY +" last pos: "+lastCoordinates[0]+","+lastCoordinates[1]);
-            if(closestGrass!= null)Console.WriteLine("closest to current: "+closestGrass.coordinates[0]+","+closestGrass.coordinates[1]+"\n\n");
+            Console.WriteLine("current pos: " + currentX + "," + currentY + " last pos: " + lastCoordinates[0] + "," + lastCoordinates[1]);
+            if (closestGrass != null) Console.WriteLine("closest to current: " + closestGrass.coordinates[0] + "," + closestGrass.coordinates[1] + "\n");
 
-            Console.WriteLine("\nClosest unmowed grass: ("+grassTerrain.Count+")");
+            Console.WriteLine("Closest unmowed grass: (" + grassTerrain.Count + ")");
             foreach (var item in grassTerrain)
             {
-                Console.Write(item.coordinates[0]+","+item.coordinates[1]+"; ");
+                Console.Write(item.coordinates[0] + "," + item.coordinates[1] + "; ");
             }
-            
-            return null;
+            */
+
+            return closestGrass != null ? closestGrass.coordinates : null;
         }
     }
 
@@ -156,7 +148,7 @@ namespace Lawnmower
     {
         static void Main(string[] args)
         {
-            Terrain[,] terrain = GenerateTerrain(6, 6);
+            Terrain[,] terrain = GenerateTerrain(10, 10);
             DrawTerrain(terrain);
             StartSimulation(terrain, PlaceLawnmower(terrain));
         }
@@ -201,18 +193,17 @@ namespace Lawnmower
 
         static void DrawTerrain(Terrain[,] terrain)
         {
-            Console.Clear();
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Write("  ");
+            Console.Write("   ");
             for (int i = 0; i < terrain.GetLength(0); i++)
             {
-                Console.Write(i+" ");
+                Console.Write(i + " ");
             }
             Console.WriteLine();
             for (int x = 0; x < terrain.GetLength(0); x++)
             {
                 Console.ForegroundColor = ConsoleColor.White;
-                Console.Write((x) + "│");
+                Console.Write((x) + (x >= 10 ? "|" : " |"));
                 for (int y = 0; y < terrain.GetLength(1); y++)
                 {
                     if (terrain[x, y] != null)
@@ -231,16 +222,32 @@ namespace Lawnmower
 
         static void StartSimulation(Terrain[,] terrain, Lawnmower lawnmower)
         {
+            Console.ReadKey();
             int stepCounter = 0;
-            while (stepCounter <= 50)
+            bool isActive = true;
+            do
             {
-                lawnmower = lawnmower.MoveLawnmower(terrain, lawnmower.FindPath(terrain));
-
-                stepCounter++;
+                Console.Clear();
                 DrawTerrain(terrain);
-                lawnmower.FindClosestGrass(terrain);
-                System.Threading.Thread.Sleep(150);
-            }
+
+                int[] path = lawnmower.FindPath(terrain);
+                if (path != null)
+                {
+                    lawnmower = lawnmower.MoveLawnmower(terrain, path);
+                    //Console.WriteLine("\n---PATH: " + path[0] + "," + path[1]);
+                }
+                else
+                {
+                    //Console.WriteLine("PATH NULL!");
+                    isActive = false;
+                }
+                stepCounter++;
+                Console.WriteLine("steps: " + stepCounter);
+
+                System.Threading.Thread.Sleep(10);
+                //Console.ReadKey();
+                //lawnmower.FindClosestGrass(terrain);
+            } while (isActive);
         }
     }
 }
