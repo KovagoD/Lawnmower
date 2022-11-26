@@ -190,7 +190,7 @@ namespace Lawnmower
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine(" Generate new map");
+                    Console.WriteLine("     Generate new map");
                 }
 
                 if (selectedOption == 1)
@@ -201,7 +201,7 @@ namespace Lawnmower
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine((isNewMap ? " Start simulation" : " Restart simulation"));
+                    Console.WriteLine((isNewMap ? "     Start simulation" : "     Restart simulation"));
                 }
 
                 if (selectedOption == 2)
@@ -212,18 +212,18 @@ namespace Lawnmower
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine((isNewMap ? " Start simulation with manual stepping" : " Restart simulation with manual stepping"));
+                    Console.WriteLine((isNewMap ? "     Start simulation with manual stepping" : "     Restart simulation with manual stepping"));
                 }
 
                 if (selectedOption == 3)
                 {
                     Console.ForegroundColor = ConsoleColor.White;
-                    Console.WriteLine(selectMarker + " Start from the same position: [{0}]", isStartFromSameCoords);
+                    Console.WriteLine(selectMarker + "Start from the same position: [{0}]", isStartFromSameCoords);
                 }
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine(" Start from the same position: [{0}]", isStartFromSameCoords);
+                    Console.WriteLine("     Start from the same position: [{0}]", isStartFromSameCoords);
                 }
 
 
@@ -231,12 +231,12 @@ namespace Lawnmower
                 if (selectedOption == 4)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("\n" + selectMarker + " Exit");
+                    Console.WriteLine("\n" + selectMarker + "Exit");
                 }
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine("\n Exit");
+                    Console.WriteLine("\n     Exit");
                 }
 
                 key = Console.ReadKey(true).Key;
