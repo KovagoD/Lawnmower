@@ -89,8 +89,7 @@ namespace Lawnmower
                 {
                     Console.WriteLine("\tpath: " + item[0] + "," + item[1]);
                 }
-                /*
-                */
+
 
                 Random r = new Random();
                 return availablePaths.Count > 0 ? availablePaths[r.Next(0, availablePaths.Count)] : null;
@@ -148,63 +147,96 @@ namespace Lawnmower
 
     internal class Program
     {
+        static int minMapSize = 5, maxMapSize = 21;
         static int obstacleCount = 0;
         static int grassCount = 0;
         static Random r = new Random();
 
+        static Terrain[,] mainTerrain;
+        static int[] starterCoordinates;
+
+        static bool isNewMap = true;
+        static bool isStartFromSameCoords = true;
+
+        static int selectedOption = 0;
         static void Main(string[] args)
         {
-            Menu();
-
-            Terrain[,] terrain = GenerateTerrain(r.Next(5, 21), r.Next(5, 21));
-            //GenerateTerrain(r.Next(5, 21), r.Next(5, 21));
-            DrawTerrain(terrain);
-            StartSimulation(terrain, PlaceLawnmower(terrain));
+            Menu(mainTerrain);
         }
 
-        static void Menu()
+        static void Menu(Terrain[,] currentTerrain)
         {
-            int selectedOption = 0;
             ConsoleKey key;
-
             Console.CursorVisible = false;
+            string selectMarker = " -> ";
+
+            if (currentTerrain == null) { currentTerrain = GenerateTerrain(); }
+            if (mainTerrain == null) { mainTerrain = (Terrain[,])currentTerrain.Clone(); }
+
             do
             {
                 Console.Clear();
+
+                DrawTerrain(currentTerrain);
+
                 Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine("\n");
 
                 if (selectedOption == 0)
                 {
                     Console.ForegroundColor = ConsoleColor.White;
-                    Console.WriteLine("-> " + "Restart simulation");
+                    Console.WriteLine(selectMarker + "Generate new map");
                 }
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine("Restart simulation");
+                    Console.WriteLine(" Generate new map");
                 }
 
                 if (selectedOption == 1)
                 {
                     Console.ForegroundColor = ConsoleColor.White;
-                    Console.WriteLine("-> " + "Generate new map");
+                    Console.WriteLine(selectMarker + (isNewMap ? "Start simulation" : "Restart simulation"));
                 }
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine("Generate new map");
+                    Console.WriteLine((isNewMap ? " Start simulation" : " Restart simulation"));
                 }
 
                 if (selectedOption == 2)
                 {
                     Console.ForegroundColor = ConsoleColor.White;
-                    Console.WriteLine("-> " + "Exit");
+                    Console.WriteLine(selectMarker + (isNewMap ? "Start simulation with manual stepping" : "Restart simulation with manual stepping"));
                 }
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine("Exit");
+                    Console.WriteLine((isNewMap ? " Start simulation with manual stepping" : " Restart simulation with manual stepping"));
+                }
+
+                if (selectedOption == 3)
+                {
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.WriteLine(selectMarker + " Start from the same position: [{0}]", isStartFromSameCoords);
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine(" Start from the same position: [{0}]", isStartFromSameCoords);
+                }
+
+
+
+                if (selectedOption == 4)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("\n" + selectMarker + " Exit");
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine("\n Exit");
                 }
 
                 key = Console.ReadKey(true).Key;
@@ -212,43 +244,45 @@ namespace Lawnmower
                 switch (key)
                 {
                     case ConsoleKey.UpArrow:
-                        {
-                            if (selectedOption > 0)
-                            {
-                                selectedOption--;
-                            }
-                            break;
-                        }
+                        if (selectedOption > 0) { selectedOption--; }
+                        break;
                     case ConsoleKey.DownArrow:
-                        {
-                            if (selectedOption < 2)
-                            {
-                                selectedOption++;
-                            }
-                            break;
-                        }
+                        if (selectedOption < 4) { selectedOption++; }
+                        break;
                 }
             } while (key != ConsoleKey.Enter);
 
-            if (selectedOption == 0)
+            switch (selectedOption)
             {
-                
-
+                case 0:
+                    mainTerrain = GenerateTerrain();
+                    currentTerrain = mainTerrain;
+                    Menu(currentTerrain);
+                    break;
+                case 1:
+                    currentTerrain = (Terrain[,])mainTerrain.Clone();
+                    isNewMap = false;
+                    StartSimulation(currentTerrain, PlaceLawnmower(currentTerrain), false);
+                    break;
+                case 2:
+                    currentTerrain = (Terrain[,])mainTerrain.Clone();
+                    isNewMap = false;
+                    StartSimulation(currentTerrain, PlaceLawnmower(currentTerrain), true);
+                    break;
+                case 3:
+                    isStartFromSameCoords = !isStartFromSameCoords;
+                    Menu(currentTerrain);
+                    break;
+                case 4:
+                    Environment.Exit(0);
+                    break;
             }
-            else if (selectedOption == 1)
-            {
-                Terrain[,] terrain = GenerateTerrain(r.Next(5, 21), r.Next(5, 21));
-                //GenerateTerrain(r.Next(5, 21), r.Next(5, 21));
-                DrawTerrain(terrain);
-            }
-            else if (selectedOption == 2) { Environment.Exit(0); }
         }
 
-        static Terrain[,] GenerateTerrain(int width, int length)
+        static Terrain[,] GenerateTerrain()
         {
-            Terrain[,] terrain = new Terrain[width, length];
-            obstacleCount = 0;
-            grassCount = 0;
+            isNewMap = true;
+            Terrain[,] terrain = new Terrain[r.Next(minMapSize, maxMapSize), r.Next(minMapSize, maxMapSize)];
 
             //Generate grass & stones
             for (int x = 0; x < terrain.GetLength(0); x++)
@@ -278,7 +312,14 @@ namespace Lawnmower
                 terrain[x, yUpperBound] = new Terrain(TerrainType.Fence, new int[] { x, yUpperBound });
             }
 
-            //Count grass and obstacles
+            return terrain;
+        }
+
+        static void CountGrassAndObstacles(Terrain[,] terrain)
+        {
+            grassCount = 0;
+            obstacleCount = 0;
+
             for (int x = 0; x < terrain.GetLength(0); x++)
             {
                 for (int y = 0; y < terrain.GetLength(1); y++)
@@ -287,21 +328,35 @@ namespace Lawnmower
                     else if (terrain[x, y].terrainType == TerrainType.Stone || terrain[x, y].terrainType == TerrainType.Tree) { obstacleCount++; }
                 }
             }
-            return terrain;
         }
 
         static Lawnmower PlaceLawnmower(Terrain[,] terrain)
         {
-            int x = r.Next(1, terrain.GetUpperBound(0));
-            int y = r.Next(1, terrain.GetUpperBound(1));
-            terrain[x, y] = new Lawnmower(TerrainType.Lawnmower, new int[] { x, y });
-            return terrain[x, y] as Lawnmower;
+            do
+            {
+                if (!isStartFromSameCoords || starterCoordinates == null)
+                {
+                    int x = r.Next(1, terrain.GetUpperBound(0));
+                    int y = r.Next(1, terrain.GetUpperBound(1));
+                    if (terrain[x, y].isMowable())
+                    {
+                        terrain[x, y] = new Lawnmower(TerrainType.Lawnmower, new int[] { x, y });
+                        starterCoordinates = terrain[x, y].coordinates;
+                        return terrain[x, y] as Lawnmower;
+                    }
+                }
+                else
+                {
+                    terrain[starterCoordinates[0], starterCoordinates[1]] = new Lawnmower(TerrainType.Lawnmower, starterCoordinates);
+                    return terrain[starterCoordinates[0], starterCoordinates[1]] as Lawnmower;
+                }
+            } while (true);
         }
 
         static void DrawTerrain(Terrain[,] terrain)
         {
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Write("\t   ");
+            Console.Write("\n\t   ");
             for (int i = 0; i < terrain.GetLength(1); i++) { Console.Write(i + (i >= 10 ? "" : " ")); }
             Console.WriteLine();
 
@@ -325,9 +380,10 @@ namespace Lawnmower
             }
         }
 
-        static void StartSimulation(Terrain[,] terrain, Lawnmower lawnmower)
+        static void StartSimulation(Terrain[,] terrain, Lawnmower lawnmower, bool isManualStep)
         {
-            Console.ReadKey();
+            CountGrassAndObstacles(terrain);
+
             int stepCounter = 0;
             bool isActive = true;
             do
@@ -340,22 +396,29 @@ namespace Lawnmower
                 {
                     lawnmower = lawnmower.MoveLawnmower(terrain, path);
                     Console.WriteLine("\n---PATH: " + path[0] + "," + path[1]);
+                    stepCounter++;
+                    Console.WriteLine("\nsteps: " + stepCounter);
                 }
                 else
                 {
-                    //Console.WriteLine("PATH NULL!");
+                    Console.WriteLine("PATH NULL!");
                     isActive = false;
                 }
-                stepCounter++;
-                Console.WriteLine("steps: " + stepCounter);
 
-                //System.Threading.Thread.Sleep(10);
-                //Console.ReadKey();
+                if (isManualStep)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine("\n\n Press 'ESC' to stop the simulation.");
+                    Console.ForegroundColor = ConsoleColor.White;
+
+                    if (Console.ReadKey(true).Key == ConsoleKey.Escape) { isActive = false; }
+                }
             } while (isActive);
 
             double optimalPath = 100 - (100 * (stepCounter - grassCount)) / grassCount;
             Console.WriteLine("The path was {0:0.00}% optimal {1} grass, {2} obstacles in {3} steps", optimalPath, grassCount, obstacleCount, stepCounter);
-            Menu();
+            Console.ReadKey();
+            Menu(terrain);
         }
     }
 }
