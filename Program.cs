@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 
 namespace Lawnmower
 {
@@ -89,6 +90,7 @@ namespace Lawnmower
 
         public int[] FindPath(Terrain[,] terrain)
         {
+            List<int[]> availablePaths = new List<int[]>();
             int currentX = coordinates[0];
             int currentY = coordinates[1];
 
@@ -97,29 +99,15 @@ namespace Lawnmower
             int[] right = new int[] { currentX, currentY + 1 };
             int[] left = new int[] { currentX, currentY - 1 };
 
-            int[][] southDirections = new int[][] { down, left, right, up };
-            int[][] northDirections = new int[][] { up, right, left, down };
-            int[][] eastDirections = new int[][] { right, down, up, left };
-            int[][] westDirections = new int[][] { left, up, down, right };
+            int[][][] allDirections = new int[][][] {
+                new int[][] { down, left, right, up },
+                new int[][] { up, right, left, down },
+                new int[][] { right, down, up, left },
+                new int[][] { left, up, down, right }
+            };
 
-            List<int[]> availablePaths = new List<int[]>();
 
-            int[][] directions = southDirections;
-            switch (facingDirection)
-            {
-                case Direction.South:
-                    directions = southDirections;
-                    break;
-                case Direction.North:
-                    directions = northDirections;
-                    break;
-                case Direction.East:
-                    directions = eastDirections;
-                    break;
-                case Direction.West:
-                    directions = westDirections;
-                    break;
-            }
+            int[][] directions = allDirections[(int)facingDirection];
 
             bool isDirectMovePossible = false;
             bool isTrying = true;
@@ -149,33 +137,30 @@ namespace Lawnmower
             if (closestGrassCoordinates[0] != currentX && closestGrassCoordinates[1] != currentY)
             {
                 Console.WriteLine("try");
-                if (terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]].tries < 6)
+                if (terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]].tries < 2)
                 {
                     terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]].tries++;
-                    isTrying = false;
+                    isTrying = true;
                 }
                 else
                 {
                     Console.WriteLine("try limit reached!");
+                    // menet közben jelöli és kihagyja a végén
                     if (!inaccessibleCoordinates.Contains(closestGrassCoordinates)) { inaccessibleCoordinates.Add(closestGrassCoordinates); }
                     triedCoordinates.Clear();
-                    isTrying = true;
+                    isTrying = false;
                 }
             }
             else if (closestGrassCoordinates[0] == currentX && closestGrassCoordinates[1] == currentY)
             {
-                if (inaccessibleCoordinates.Contains(closestGrassCoordinates)) { inaccessibleCoordinates.Remove(closestGrassCoordinates); }
                 triedCoordinates.Clear();
-                isTrying = true;
+                isTrying = false;
             }
 
             //check inaccessible coords
             for (int i = 0; i < inaccessibleCoordinates.Count; i++)
             {
-                if (inaccessibleCoordinates[i][0] == coordinates[0] && inaccessibleCoordinates[i][1] == coordinates[1])
-                {
-                    inaccessibleCoordinates.RemoveAt(i);
-                }
+                if (Enumerable.SequenceEqual(inaccessibleCoordinates[i], coordinates)) { inaccessibleCoordinates.RemoveAt(i); }
             }
 
             if (closestGrassCoordinates[0] > currentX && terrain[down[0], down[1]].isMowable()) { availablePaths.Add(down); Console.WriteLine("-1-"); }
@@ -183,7 +168,7 @@ namespace Lawnmower
             if (closestGrassCoordinates[1] > currentY && terrain[right[0], right[1]].isMowable()) { availablePaths.Add(right); Console.WriteLine("-3-"); }
             if (closestGrassCoordinates[1] < currentY && terrain[left[0], left[1]].isMowable()) { availablePaths.Add(left); Console.WriteLine("-4-"); }
 
-            if (availablePaths.Count == 0)
+            if (availablePaths.Count < 1)
             {
                 if (terrain[down[0], down[1]].isMowable()) { availablePaths.Add(down); }
                 if (terrain[up[0], up[1]].isMowable()) { availablePaths.Add(up); }
@@ -191,34 +176,24 @@ namespace Lawnmower
                 if (terrain[left[0], left[1]].isMowable()) { availablePaths.Add(left); }
             }
 
-
-
             int lastCount = 0;
-
+            for (int i = 0; i < lastCoordinates.Length; i++)
+            {
+                for (int j = 0; j < availablePaths.Count; j++)
+                {
+                    if (Enumerable.SequenceEqual(lastCoordinates[i], availablePaths[j])) { lastCount++; }
+                }
+            }
+            if (availablePaths.Count > lastCount)
+            {
                 for (int i = 0; i < lastCoordinates.Length; i++)
                 {
                     for (int j = 0; j < availablePaths.Count; j++)
                     {
-                        if (lastCoordinates[i][0] == availablePaths[j][0] && lastCoordinates[i][1] == availablePaths[j][1])
-                        {
-                            lastCount++;
-                        }
+                        if (Enumerable.SequenceEqual(lastCoordinates[i], availablePaths[j])) { availablePaths.RemoveAt(j); }
                     }
                 }
-                if (availablePaths.Count > lastCount)
-                {
-                    for (int i = 0; i < lastCoordinates.Length; i++)
-                    {
-                        for (int j = 0; j < availablePaths.Count; j++)
-                        {
-                            if (lastCoordinates[i][0] == availablePaths[j][0] && lastCoordinates[i][1] == availablePaths[j][1])
-                            {
-                                availablePaths.RemoveAt(j);
-                            }
-                        }
-                    }
-                }
-            
+            }
 
             Console.WriteLine(availablePaths.Count + " paths");
             Console.WriteLine("\n\tcurrent pos: " + coordinates[0] + "," + coordinates[1] + " closest pos: "
@@ -226,78 +201,18 @@ namespace Lawnmower
                 " tries: " + terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]].tries +
                 " is directr move poss: " + isDirectMovePossible + " is on target: " + isTrying);
 
-
-            /*
-
-            if (availablePaths.Count < 0 || availablePaths == null)
-            {
-                if (terrain[down[0], down[1]].isMowable()) { availablePaths.Add(down); }
-                if (terrain[up[0], up[1]].isMowable()) { availablePaths.Add(up); }
-                if (terrain[right[0], right[1]].isMowable()) { availablePaths.Add(right); }
-                if (terrain[left[0], left[1]].isMowable()) { availablePaths.Add(left); }
-            }
-
-                if (closestGrassCoordinates != null)
-                {
-                    foreach (var item in directions)
-                    {
-                        if (terrain[item[0], item[1]] != null && terrain[item[0], item[1]].isMowable())
-                        {
-                            if (!availablePaths.Contains(item)) availablePaths.Add(item);
-                            isDirectMovePossible = true;
-                        }
-                    }
-
-                    if (availablePaths.Count > 1 && !isMovingToTarget)
-                    {
-                        for (int i = 0; i < lastCoordinates.Length; i++)
-                        {
-                            for (int j = 0; j < availablePaths.Count; j++)
-                            {
-                                if (lastCoordinates[i][0] == availablePaths[j][0] && lastCoordinates[i][1] == availablePaths[j][1])
-                                {
-                                    availablePaths.RemoveAt(j);
-                                }
-                            }
-                        }
-
-                        for (int i = 0; i < triedCoordinates.Count; i++)
-                        {
-                            for (int j = 0; j < availablePaths.Count; j++)
-                            {
-                                if (triedCoordinates[i][0] == availablePaths[j][0] && triedCoordinates[i][1] == availablePaths[j][1])
-                                {
-                                    availablePaths.RemoveAt(j);
-                                }
-                            }
-                        }
-
-                    }
-                }
-            */
-
             Console.WriteLine("\navailable paths: ({0})", availablePaths.Count);
             foreach (var item in availablePaths) { Console.Write("[{0},{1}]", item[0], item[1]); }
 
-
             Random r = new Random();
 
-            int[] path = !isTrying ? availablePaths[r.Next(0, availablePaths.Count)] : availablePaths[0];
-
-            //else if (availablePaths.Count > 1) { path = availablePaths[r.Next(0, availablePaths.Count)]; }
-
-            /*
-            if (availablePaths.Count > 0)
-            {
-                path = isDirectMovePossible ? availablePaths[0] : availablePaths[r.Next(0, availablePaths.Count)];
-                //if (!triedCoordinates.Contains(path)) { triedCoordinates.Add(path); }
-            }
-            */
-
+            int[] path = null;
+            if (availablePaths != null) { path = !isTrying ? availablePaths[r.Next(0, availablePaths.Count)] : availablePaths[0]; }
             if (path == down) { facingDirection = Direction.South; }
             else if (path == up) { facingDirection = Direction.North; }
             else if (path == right) { facingDirection = Direction.East; }
             else if (path == left) { facingDirection = Direction.West; }
+
             Console.WriteLine("\nfacing direction: " + facingDirection);
 
             Console.WriteLine("final path: " + path);
@@ -331,24 +246,6 @@ namespace Lawnmower
             }
 
             return closestGrass != null ? closestGrass.coordinates : null;
-        }
-
-        bool ContainsCoordinate(int[][] array, int[] coordinate)
-        {
-            foreach (var item in array)
-            {
-                if (item[0] == coordinate[0] && item[1] == coordinate[1]) { return true; }
-            }
-            return false;
-        }
-
-        bool ContainsCoordinate(List<int[]> list, int[] coordinate)
-        {
-            foreach (var item in list)
-            {
-                if (item[0] == coordinate[0] && item[1] == coordinate[1]) { return true; }
-            }
-            return false;
         }
     }
 
@@ -585,8 +482,8 @@ namespace Lawnmower
             {
                 if (!isStartFromSameCoords || starterCoordinates == null)
                 {
-                    int x = r.Next(1, terrain.GetLength(0) - 1);
-                    int y = r.Next(1, terrain.GetLength(1) - 1);
+                    int x = r.Next(1, terrain.GetLength(0) - 2);
+                    int y = r.Next(1, terrain.GetLength(1) - 2);
                     if (terrain[x, y].isMowable())
                     {
                         terrain[x, y] = new Lawnmower(TerrainType.Lawnmower, new int[] { x, y });
