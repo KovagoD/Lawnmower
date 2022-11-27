@@ -78,21 +78,6 @@ namespace Lawnmower
             lastCoordinates[lastCoordIndex] = coordinates;
             lastCoordIndex = lastCoordIndex == 1 ? 0 : lastCoordIndex + 1;
 
-            /*
-            if (ContainsCoordinate(lastCoordinates, targetCoordinates))
-            {
-                if (tries < 5)
-                {
-                    tries++;
-                    if (!triedCoordinates.Contains(targetCoordinates)) { triedCoordinates.Add(targetCoordinates); Console.WriteLine("added"); }
-                }
-                else
-                {
-                    if (!unaccessibleCoordinates.Contains(closestGrassCoordinates)) { unaccessibleCoordinates.Add(closestGrassCoordinates); }
-                    tries = 0;
-                }
-            }*/
-
             terrain[coordinates[0], coordinates[1]] = new Terrain(TerrainType.Grass, coordinates);
             terrain[coordinates[0], coordinates[1]].isMowed = true;
 
@@ -107,7 +92,24 @@ namespace Lawnmower
             int currentX = coordinates[0];
             int currentY = coordinates[1];
 
-            closestGrassCoordinates = FindClosestGrass(terrain);
+            int[] tmp = FindClosestGrass(terrain);
+            if (closestGrassCoordinates == tmp)
+            {
+                if (tries < 11)
+                {
+                    tries++;
+                }
+                else
+                {
+                    if (!unaccessibleCoordinates.Contains(closestGrassCoordinates)) { unaccessibleCoordinates.Add(closestGrassCoordinates); }
+                    tries = 0;
+                }
+            }
+            else
+            {
+                closestGrassCoordinates = tmp;
+                tries = 0;
+            }
 
             int[] down = new int[] { currentX + 1, currentY };
             int[] up = new int[] { currentX - 1, currentY };
@@ -149,7 +151,6 @@ namespace Lawnmower
             Console.WriteLine("isDirectMovePossible: " + isDirectMovePossible);
             if (!isDirectMovePossible && closestGrassCoordinates != null)
             {
-                Console.WriteLine("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
                 Console.WriteLine(closestGrassCoordinates[0] + "," + closestGrassCoordinates[1] + " / " + currentX + "," + currentY);
                 if (closestGrassCoordinates[0] > currentX && terrain[down[0], down[1]].isMowable()) { availablePaths.Add(down); Console.WriteLine("1."); }
                 if (closestGrassCoordinates[0] < currentX && terrain[up[0], up[1]].isMowable()) { availablePaths.Add(up); Console.WriteLine("2."); }
@@ -158,7 +159,6 @@ namespace Lawnmower
 
                 if (closestGrassCoordinates != null)
                 {
-                    Console.WriteLine("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
                     foreach (var item in directions)
                     {
                         if (terrain[item[0], item[1]] != null && terrain[item[0], item[1]].isMowable())
@@ -184,7 +184,6 @@ namespace Lawnmower
                     }
                 }
             }
-
 
             Console.WriteLine("\nlast paths: ({0})", lastCoordinates.Length);
             foreach (var item in lastCoordinates) { Console.Write("[{0},{1}]", item[0], item[1]); }
@@ -215,7 +214,7 @@ namespace Lawnmower
             {
                 for (int y = 0; y < terrain.GetLength(1); y++)
                 {
-                    if (terrain[x, y].terrainType == TerrainType.Grass && !terrain[x, y].isMowed)
+                    if (terrain[x, y].terrainType == TerrainType.Grass && !terrain[x, y].isMowed && !unaccessibleCoordinates.Contains(terrain[x, y].coordinates))
                     {
                         grassTerrain.Add(terrain[x, y]);
                     }
@@ -223,13 +222,12 @@ namespace Lawnmower
             }
 
             //&& !unaccessibleCoordinates.Contains(terrain[x, y].coordinates)
-            /*
+
             Console.WriteLine("\nunaccessible coordinates: ({0})", unaccessibleCoordinates.Count);
             foreach (var item in unaccessibleCoordinates) { Console.Write("[{0},{1}]", item[0], item[1]); }
 
             Console.WriteLine("\ntried paths: ({0})", triedCoordinates.Count);
             foreach (var item in triedCoordinates) { Console.Write("[{0},{1}]", item[0], item[1]); }
-            */
 
             Terrain closestGrass = null;
             double diff = int.MaxValue;
@@ -305,10 +303,7 @@ namespace Lawnmower
             do
             {
                 Console.Clear();
-
                 DrawTerrain(currentTerrain);
-
-                Console.ForegroundColor = ConsoleColor.White;
                 Console.WriteLine("\n");
 
                 if (selectedOption == 0)
@@ -381,8 +376,6 @@ namespace Lawnmower
                 }
 
                 key = Console.ReadKey(true).Key;
-
-
                 switch (key)
                 {
                     case ConsoleKey.UpArrow:
@@ -415,6 +408,8 @@ namespace Lawnmower
                     break;
                 case 3:
                     difficulty = (int)difficulty < 2 ? difficulty + 1 : 0;
+                    mainTerrain = GenerateTerrain();
+                    currentTerrain = mainTerrain;
                     Menu(currentTerrain);
                     break;
                 case 4:
@@ -439,7 +434,7 @@ namespace Lawnmower
                 case MapType.Easy:
                     minMapSize = 5;
                     maxMapSize = 7;
-                    obstacleRate = 90;
+                    obstacleRate = 40;
                     break;
                 case MapType.Normal:
                     minMapSize = 7;
@@ -478,9 +473,9 @@ namespace Lawnmower
                 {
                     int chance = r.Next(0, 101);
                     TerrainType type = TerrainType.Grass;
+                        if (chance > obstacleRate) { type = (TerrainType)r.Next(1, 3); }
                     if (x > 1 && x < terrain.GetLength(0) - 2 && y > 1 && y < terrain.GetLength(1) - 2)
                     {
-                        if (chance > obstacleRate) { type = (TerrainType)r.Next(1, 3); }
                     }
                     terrain[x, y] = new Terrain(type, new int[] { x, y });
                 }
@@ -510,8 +505,8 @@ namespace Lawnmower
             {
                 if (!isStartFromSameCoords || starterCoordinates == null)
                 {
-                    int x = r.Next(2, terrain.GetLength(0) - 2);
-                    int y = r.Next(2, terrain.GetLength(1) - 2);
+                    int x = r.Next(1, terrain.GetLength(0) - 1);
+                    int y = r.Next(1, terrain.GetLength(1) - 1);
                     if (terrain[x, y].isMowable())
                     {
                         terrain[x, y] = new Lawnmower(TerrainType.Lawnmower, new int[] { x, y });
@@ -570,13 +565,11 @@ namespace Lawnmower
                 if (path != null)
                 {
                     lawnmower = lawnmower.Move(terrain, path);
-                    Console.WriteLine("\n---PATH: " + path[0] + "," + path[1]);
+                    Console.WriteLine("\t---PATH: " + path[0] + "," + path[1]);
                     stepCounter++;
-                    Console.WriteLine("\nsteps: " + stepCounter);
                 }
                 else
                 {
-                    Console.WriteLine("PATH NULL!");
                     isActive = false;
                 }
 
