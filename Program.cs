@@ -51,8 +51,6 @@ namespace Lawnmower
         public Direction facingDirection = Direction.East;
         public int[][] lastCoordinates = new int[3][] { new int[] { 0, 0 }, new int[] { 0, 0 }, new int[] { 0, 0 } };
         static int[] closestGrassCoordinates;
-
-        List<int[]> inaccessibleCoordinates = new List<int[]>();
         static int lastCoordIndex = 0;
 
         public Lawnmower(TerrainType terrainType, int[] coordinates) : base(terrainType, coordinates)
@@ -118,7 +116,6 @@ namespace Lawnmower
 
             bool isSet = false;
             int[] closestGrassInRadius = null;
-
             foreach (var item in directions)
             {
                 if (!isSet && terrain[item[0], item[1]] != null && terrain[item[0], item[1]].isMowable() && !terrain[item[0], item[1]].isMowed)
@@ -127,47 +124,81 @@ namespace Lawnmower
                     isSet = true;
                 }
             }
+            // ÚJAT KERES HA MÉG MINDIG NEM ÉRTE EL
 
-            closestGrassCoordinates = isSet ? closestGrassInRadius : closestGrassCoordinates != null ? closestGrassCoordinates : FindClosestGrass(terrain);
+            
+            //closestGrassCoordinates = isSet ? closestGrassInRadius : closestGrassCoordinates != null ? closestGrassCoordinates : FindClosestGrass(terrain);
             if (!availablePaths.Contains(closestGrassCoordinates) && isSet) { availablePaths.Add(closestGrassCoordinates); }
+            if (closestGrassCoordinates == null) { Console.WriteLine("return NULL!"); return null; }
 
-            //if (closestGrassCoordinates == null) { return null; }
+            closestGrassCoordinates = FindClosestGrass(terrain);
 
-            if (closestGrassCoordinates[0] != currentX && closestGrassCoordinates[1] != currentY)
+            if (availablePaths.Count < 1)
             {
-                Console.WriteLine("\t--- try ---");
-                Terrain closestGrass = terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]];
-                if (closestGrass.tries < closestGrass.maxTries + 1)
+                Console.WriteLine("bejön ide");
+                bool isCurrentXSmaller = closestGrassCoordinates[0] > currentX;
+                bool isCurrentXBigger = closestGrassCoordinates[0] < currentX;
+
+                bool isCurrentYSmaller = closestGrassCoordinates[1] > currentY;
+                bool isCurrentYBigger = closestGrassCoordinates[1] < currentY;
+
+                Console.WriteLine("isCurrentXSmaller: "+ isCurrentXSmaller);
+                Console.WriteLine("isCurrentXBigger: " + isCurrentXBigger);
+                Console.WriteLine("isCurrentYSmaller: " + isCurrentYSmaller);
+                Console.WriteLine("isCurrentYBigger: " + isCurrentYBigger);
+
+                if (isCurrentXSmaller && terrain[down[0], down[1]].isMowable()) { availablePaths.Add(down); Console.WriteLine("1:0 down"); }
+                else if (isCurrentXSmaller && !terrain[down[0], down[1]].isMowable())
                 {
-                    closestGrass.tries++;
-                    isTrying = true;
+                    Console.WriteLine("nem tudott 1");
+                    if (terrain[right[0], right[1]].isMowable()){availablePaths.Add(right); Console.WriteLine("1:1 right");}
+                    else if (terrain[left[0], left[1]].isMowable()) { availablePaths.Add(left); Console.WriteLine("1:2 left"); }
+                    else if (terrain[up[0], up[1]].isMowable()) { availablePaths.Add(up); Console.WriteLine("1:3 up"); }
                 }
-                else
+
+                if (isCurrentXBigger && terrain[up[0], up[1]].isMowable()) { availablePaths.Add(up); Console.WriteLine("2:0 up"); }
+                else if (isCurrentXBigger && !terrain[up[0], up[1]].isMowable())
                 {
-                    Console.WriteLine("\t--- try limit reached! ---");
+                    Console.WriteLine("nem tudott 2");
+                    if (terrain[left[0], left[1]].isMowable()) { availablePaths.Add(left); Console.WriteLine("2:1 left"); }
+                    else if (terrain[right[0], right[1]].isMowable()) { availablePaths.Add(right); Console.WriteLine("2:2 right"); }
+                    else if (terrain[down[0], down[1]].isMowable()) { availablePaths.Add(down); Console.WriteLine("2:3 down"); }
 
-                    if (!inaccessibleCoordinates.Contains(closestGrassCoordinates))
-                    {
-                        closestGrass.isInaccessible = true;
-                        inaccessibleCoordinates.Add(closestGrassCoordinates);
-                    }
-                    closestGrassCoordinates = FindClosestGrass(terrain);
-                    isTrying = false;
                 }
-            }
-            else if (closestGrassCoordinates[0] == currentX && closestGrassCoordinates[1] == currentY)
-            {
-                Console.WriteLine("\t--- coord reached! ---");
-                terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]].isInaccessible = false;
-                if (inaccessibleCoordinates.Contains(closestGrassCoordinates)) { inaccessibleCoordinates.Remove(closestGrassCoordinates); }
-                closestGrassCoordinates = FindClosestGrass(terrain);
+
+                if (isCurrentYBigger && terrain[right[0], right[1]].isMowable()) { availablePaths.Add(right); Console.WriteLine("3:0 right"); }
+                else if (isCurrentYBigger && !terrain[right[0], right[1]].isMowable())
+                {
+                    Console.WriteLine("nem tudott 3");
+                    if (terrain[up[0], up[1]].isMowable()) { availablePaths.Add(up); Console.WriteLine("3:1 up"); }
+                    else if (terrain[down[0], down[1]].isMowable()) { availablePaths.Add(down); Console.WriteLine("3:2 down"); }
+                    else if (terrain[left[0], left[1]].isMowable()) { availablePaths.Add(down); Console.WriteLine("3:3 left"); }
+                }
+
+                if (isCurrentYSmaller && terrain[left[0], left[1]].isMowable()) { availablePaths.Add(left); Console.WriteLine("4:0 left"); }
+                else if (isCurrentYSmaller && !terrain[left[0], left[1]].isMowable())
+                {
+                    Console.WriteLine("nem tudott 4");
+                    if (terrain[down[0], down[1]].isMowable()) { availablePaths.Add(down); Console.WriteLine("4:1 down"); }
+                    else if (terrain[up[0], up[1]].isMowable()) { availablePaths.Add(up); Console.WriteLine("4:2 up"); }
+                    else if (terrain[right[0], right[1]].isMowable()) { availablePaths.Add(right); Console.WriteLine("4:3 right"); }
+                }
+
             }
 
-            //check inaccessible coords
-            for (int i = 0; i < inaccessibleCoordinates.Count; i++)
-            {
-                if (Enumerable.SequenceEqual(inaccessibleCoordinates[i], coordinates)) { inaccessibleCoordinates.RemoveAt(i); }
-            }
+
+            Console.WriteLine("\n\tcurrent pos: " + coordinates[0] + "," + coordinates[1] +
+                           "\n\tclosest pos: " + closestGrassCoordinates[0] + "," + closestGrassCoordinates[1] +
+                           "\n\ttries: " + terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]].tries + " / " + terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]].maxTries +
+                           "\n\tisSet: " + isSet);
+
+            Console.WriteLine("\nlast coordinates: ({0})", lastCoordinates.Length);
+            foreach (var item in lastCoordinates) { Console.Write("[{0},{1}]", item[0], item[1]); }
+            Console.WriteLine("\navailable paths: ({0})", availablePaths.Count);
+            foreach (var item in availablePaths) { Console.Write("[{0},{1}]", item[0], item[1]); }
+
+            /*
+           
 
 
             if (!isSet && closestGrassCoordinates != null)
@@ -184,14 +215,15 @@ namespace Lawnmower
 
                 Console.WriteLine();
 
+
                 int minIndex = -1;
                 int minDistance = int.MaxValue;
-
                 for (int i = 0; i < directions.Length; i++)
                 {
-                    if (terrain[directions[i][0], directions[i][1]] != null && terrain[directions[i][0], directions[i][1]].isMowable())
+                    Console.WriteLine("x: " + lastCoordinates.Contains(directions[i]));
+                    if (terrain[directions[i][0], directions[i][1]] != null && terrain[directions[i][0], directions[i][1]].isMowable() && !IsLastContains(directions[i]))
                     {
-                        availablePaths.Add(directions[i]);
+                        //availablePaths.Add(directions[i]);
                         int distance = GetDistance(terrain, directions[i], closestGrassCoordinates);
                         if (distance <= minDistance)
                         {
@@ -200,138 +232,25 @@ namespace Lawnmower
                         }
                     }
                 }
-                Console.WriteLine("min distance: "+minDistance);
+                Console.WriteLine("min distance: " + minDistance);
                 availablePaths.Add(directions[minIndex]);
-                
-                int lastCount = 0;
-                for (int i = 0; i < lastCoordinates.Length; i++)
-                {
-                    for (int j = 0; j < availablePaths.Count; j++)
-                    {
-                        if (Enumerable.SequenceEqual(lastCoordinates[i], availablePaths[j])) { lastCount++; }
-                    }
-                }
-                if (availablePaths.Count > lastCount)
-                {
-                    for (int i = 0; i < lastCoordinates.Length; i++)
-                    {
-                        for (int j = 0; j < availablePaths.Count; j++)
-                        {
-                            Console.WriteLine("removed ");
-                            if (Enumerable.SequenceEqual(lastCoordinates[i], availablePaths[j])) { availablePaths.RemoveAt(j); Console.WriteLine("removed "); }
-                        }
-                    }
-                }
-
-                /*
-                if (isCurrentXSmaller && terrain[down[0], down[1]].isMowable()) { availablePaths.Add(down); Console.WriteLine("1:0 down"); }
-                else if (isCurrentXSmaller && !terrain[down[0], down[1]].isMowable())
-                {
-                    Console.WriteLine("nem tudott 1");
-
-                    if (isCurrentXBigger) { Console.WriteLine("1-1 right"); }
-
-                    if (isCurrentXSmaller) { Console.WriteLine("1-2 left"); }//--
-
-                    if (isCurrentYBigger) { Console.WriteLine("1-3 down"); }
-                    if (isCurrentYSmaller) { Console.WriteLine("1-4 up"); }
-
-                    
-                    if (terrain[right[0], right[1]].isMowable()) { availablePaths.Add(right); Console.WriteLine("1:1 right"); }
-                    if (terrain[left[0], left[1]].isMowable()) { availablePaths.Add(left); Console.WriteLine("1:2 left"); }
-                    if (availablePaths.Count > 0)
-                    {
-                        if (terrain[up[0], up[1]].isMowable()) { availablePaths.Add(up); Console.WriteLine("1:3 up"); }
-                    }
-                    
-                }
-
-                if (isCurrentXBigger && terrain[up[0], up[1]].isMowable()) { availablePaths.Add(up); Console.WriteLine("2:0 up"); }
-                else if (isCurrentXBigger && !terrain[up[0], up[1]].isMowable())
-                {
-                    Console.WriteLine("nem tudott 2");
-                    if (isCurrentXBigger) { Console.WriteLine("2-1 up"); }
-                    if (isCurrentXSmaller) { Console.WriteLine("2-2 down"); }
-                    if (isCurrentYBigger) { Console.WriteLine("2-3"); }
-                    if (isCurrentYSmaller) { Console.WriteLine("2-4"); }
-
-                    
-                    if (terrain[right[0], right[1]].isMowable()) { availablePaths.Add(right); Console.WriteLine("2:1 right"); }
-                    if (terrain[left[0], left[1]].isMowable()) { availablePaths.Add(left); Console.WriteLine("2:2 left"); }
-                    if (availablePaths.Count > 0)
-                    {
-                        if (terrain[down[0], down[1]].isMowable()) { availablePaths.Add(down); Console.WriteLine("2:3 down"); }
-                    }
-                }
-
-                if (isCurrentYBigger && terrain[right[0], right[1]].isMowable()) { availablePaths.Add(right); Console.WriteLine("3:0 right"); }
-                else if (isCurrentYBigger && !terrain[right[0], right[1]].isMowable())
-                {
-                    Console.WriteLine("nem tudott 3");
-                    if (isCurrentXBigger) { Console.WriteLine("3-1 down"); }
-                    if (isCurrentXSmaller) { Console.WriteLine("3-2 up"); }
-                    if (isCurrentYBigger) { Console.WriteLine("3-3 right "); }2
-                    if (isCurrentYSmaller) { Console.WriteLine("3-4 left"); }
-
-                    if (terrain[up[0], up[1]].isMowable()) { availablePaths.Add(up); Console.WriteLine("3:1 up"); }
-                    if (terrain[down[0], down[1]].isMowable()) { availablePaths.Add(down); Console.WriteLine("3:2 down"); }
-                    if (availablePaths.Count > 0)
-                    {
-                        if (terrain[left[0], left[1]].isMowable()) { availablePaths.Add(left); Console.WriteLine("3:3 left"); }
-                    }
-                    
-                }
-
-                if (isCurrentYSmaller && terrain[left[0], left[1]].isMowable()) { availablePaths.Add(left); Console.WriteLine("4:0 left"); }
-                else if (isCurrentYSmaller && !terrain[left[0], left[1]].isMowable())
-                {
-                    Console.WriteLine("nem tudott 4");
-                    if (isCurrentXBigger) { Console.WriteLine("4-1 up"); }
-                    if (isCurrentXSmaller) { Console.WriteLine("4-2 down"); }
-                    if (isCurrentYBigger) { Console.WriteLine("4-3 left"); }
-                    if (isCurrentYSmaller) { Console.WriteLine("4-4 up"); }
-
-                    
-                    if (terrain[up[0], up[1]].isMowable()) { availablePaths.Add(up); Console.WriteLine("4:1 up"); }
-                    if (terrain[down[0], down[1]].isMowable()) { availablePaths.Add(down); Console.WriteLine("4:2 down"); }  
-                    if (availablePaths.Count > 0)
-                    {
-                        if (terrain[right[0], right[1]].isMowable()) { availablePaths.Add(right); Console.WriteLine("4:3 right"); }
-                    }
-                }
-                */
-
-
-
-
-                /*
-                if (availablePaths.Count < 1)
-                {
-                    if (terrain[down[0], down[1]].isMowable()) { availablePaths.Add(down); }
-                    if (terrain[up[0], up[1]].isMowable()) { availablePaths.Add(up); }
-                    if (terrain[right[0], right[1]].isMowable()) { availablePaths.Add(right); }
-                    if (terrain[left[0], left[1]].isMowable()) { availablePaths.Add(left); }
-                }
-                */
-
-
 
                 Console.WriteLine("\n\tcurrent pos: " + coordinates[0] + "," + coordinates[1] +
-                        "\n\tclosest pos: " + closestGrassCoordinates[0] + "," + closestGrassCoordinates[1] +
-                        "\n\ttries: " + terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]].tries + " / " + terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]].maxTries +
-                        "\n\tisSet: " + isSet);
+                                "\n\tclosest pos: " + closestGrassCoordinates[0] + "," + closestGrassCoordinates[1] +
+                                "\n\ttries: " + terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]].tries + " / " + terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]].maxTries +
+                                "\n\tisSet: " + isSet);
 
-                Console.WriteLine("\ninaccessible coordinates: ({0})", inaccessibleCoordinates.Count);
-                foreach (var item in inaccessibleCoordinates) { Console.Write("[{0},{1}]", item[0], item[1]); }
-                Console.WriteLine("\nlast coordinates paths: ({0})", lastCoordinates.Length);
+                Console.WriteLine("\nlast coordinates: ({0})", lastCoordinates.Length);
                 foreach (var item in lastCoordinates) { Console.Write("[{0},{1}]", item[0], item[1]); }
                 Console.WriteLine("\navailable paths: ({0})", availablePaths.Count);
                 foreach (var item in availablePaths) { Console.Write("[{0},{1}]", item[0], item[1]); }
             }
-
+            */
             int[] path = null;
             Random r = new Random();
-            if (availablePaths != null && availablePaths.Count > 0) { path = !isTrying ? availablePaths[r.Next(0, availablePaths.Count)] : availablePaths[0]; }
+            //!isTrying ? availablePaths[r.Next(0, availablePaths.Count)] : availablePaths[0]; 
+            if (availablePaths != null && availablePaths.Count > 0) { path = availablePaths[r.Next(0, availablePaths.Count)]; }
+
             if (path == down) { facingDirection = Direction.South; }
             else if (path == up) { facingDirection = Direction.North; }
             else if (path == right) { facingDirection = Direction.East; }
@@ -343,6 +262,18 @@ namespace Lawnmower
             return path;
         }
 
+        bool IsLastContains(int[] x)
+        {
+            foreach (var y in lastCoordinates)
+            {
+                if (y[0] == x[0] && y[1] == x[1])
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public int[] FindClosestGrass(Terrain[,] terrain)
         {
             List<Terrain> grassTerrain = new List<Terrain>();
@@ -350,7 +281,8 @@ namespace Lawnmower
             {
                 for (int y = 0; y < terrain.GetLength(1); y++)
                 {
-                    if (terrain[x, y].terrainType == TerrainType.Grass && !terrain[x, y].isMowed && !inaccessibleCoordinates.Contains(terrain[x, y].coordinates))
+                    //&& !inaccessibleCoordinates.Contains(terrain[x, y].coordinates)
+                    if (terrain[x, y].terrainType == TerrainType.Grass && !terrain[x, y].isMowed)
                     {
                         grassTerrain.Add(terrain[x, y]);
                     }
@@ -387,14 +319,6 @@ namespace Lawnmower
 
             return closestGrass != null ? closestGrass.coordinates : null;
         }
-
-        /*
-        private static double GetDistance(int[] x, int[] y)
-        {
-            return Math.Abs((x[1] - x[0]) + (y[1] - y[0]));
-        }
-        */
-
         public int GetDistance(Terrain[,] terrain, int[] x, int[] y)
         {
             int x1 = x[0];
@@ -649,9 +573,9 @@ namespace Lawnmower
                 {
                     int chance = r.Next(0, 101);
                     TerrainType type = TerrainType.Grass;
-                    if (chance > obstacleRate) { type = (TerrainType)r.Next(1, 3); }
                     if (x > 1 && x < terrain.GetLength(0) - 2 && y > 1 && y < terrain.GetLength(1) - 2)
                     {
+                        if (chance > obstacleRate) { type = (TerrainType)r.Next(1, 3); }
                     }
                     terrain[x, y] = new Terrain(type, new int[] { x, y });
                 }
