@@ -6,11 +6,12 @@ using System.Linq;
 namespace Lawnmower
 {
     public enum TerrainType { Grass = 0, Stone = 1, Tree = 2, Fence = 3, Lawnmower = 4 };
-    public enum Direction { South, North, East, West };
+    public enum Direction { South = 0, North = 1, East = 2, West = 3 };
     public enum MapType { Easy, Normal, Hard }
     public class Terrain
     {
         public int tries = 0;
+        public int maxTries = 5;
         public int[] coordinates;
         public TerrainType terrainType;
         public bool isMowable() { return terrainType == TerrainType.Grass ? true : false; }
@@ -137,7 +138,8 @@ namespace Lawnmower
             if (closestGrassCoordinates[0] != currentX && closestGrassCoordinates[1] != currentY)
             {
                 Console.WriteLine("try");
-                if (terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]].tries < 2)
+                Terrain closestGrass = terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]];
+                if (closestGrass.tries < closestGrass.maxTries + 1)
                 {
                     terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]].tries++;
                     isTrying = true;
@@ -198,7 +200,8 @@ namespace Lawnmower
             Console.WriteLine(availablePaths.Count + " paths");
             Console.WriteLine("\n\tcurrent pos: " + coordinates[0] + "," + coordinates[1] + " closest pos: "
                 + closestGrassCoordinates[0] + "," + closestGrassCoordinates[1] +
-                " tries: " + terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]].tries +
+                "\n distance: X " + GetDistance(terrain, closestGrassCoordinates)[0] + " Y " + GetDistance(terrain, closestGrassCoordinates)[1] +
+                "\ntries: " + terrain[closestGrassCoordinates[0], closestGrassCoordinates[1]].tries +
                 " is directr move poss: " + isDirectMovePossible + " is on target: " + isTrying);
 
             Console.WriteLine("\navailable paths: ({0})", availablePaths.Count);
@@ -233,19 +236,88 @@ namespace Lawnmower
                 }
             }
             Terrain closestGrass = null;
+            int closestX;
+            int closestY;
             double diff = int.MaxValue;
+
 
             for (int i = 0; i < grassTerrain.Count; i++)
             {
-                double tmp = Math.Pow(grassTerrain[i].coordinates[0] - coordinates[0], 2) + Math.Pow(grassTerrain[i].coordinates[1] - coordinates[1], 2);
-                if (tmp <= diff)
+                int[] tmp = GetDistance(terrain, grassTerrain[i].coordinates);
+                closestX = tmp[0];
+                closestY = tmp[1];
+
+                //Console.WriteLine("----["+grassTerrain[i].coordinates[0]+","+grassTerrain[i].coordinates[1]+"] : "+closestX +" - "+closestY);
+                //Math.Pow(grassTerrain[i].coordinates[0] - coordinates[0], 2) + Math.Pow(grassTerrain[i].coordinates[1] - coordinates[1], 2);
+                if (Math.Abs(closestX + closestY) <= diff)
                 {
-                    diff = tmp;
+                    diff = Math.Abs(closestX + closestY);
                     closestGrass = grassTerrain[i];
                 }
             }
 
             return closestGrass != null ? closestGrass.coordinates : null;
+        }
+
+        /*
+        private static double GetDistance(int[] x, int[] y)
+        {
+            return Math.Abs((x[1] - x[0]) + (y[1] - y[0]));
+        }
+        */
+
+        public int[] GetDistance(Terrain[,] terrain, int[] position)
+        {
+            int positionX = position[0];
+            int positionY = position[1];
+
+            int currentX = coordinates[0];
+            int currentY = coordinates[1];
+
+            var nextXLeft = currentX;
+            var nextXRight = currentX;
+            if (positionX < currentX)
+            {
+                nextXLeft = positionX;
+                nextXRight = terrain.GetLength(0) + positionX;
+            }
+            else if (positionX > currentX)
+            {
+                nextXLeft = -terrain.GetLength(0) + positionX;
+                nextXRight = positionX;
+            }
+
+            var distanceLeft = nextXLeft - currentX;
+            var distanceRight = nextXRight - currentX;
+
+            // use the Absolute only for comparing which is shorter
+            var distanceX = Math.Abs(distanceRight) < Math.Abs(distanceLeft) ? distanceRight : distanceLeft;
+
+            // And finally we want the smallest of both possible distances
+            distanceX = Math.Min(distanceLeft, distanceRight);
+
+            // Repeat the same for the Y axis
+            var nextYDown = currentY;
+            var nextYUp = currentY;
+            if (positionY < currentY)
+            {
+                nextYDown = positionY;
+                nextYUp = terrain.GetLength(1) + positionY;
+            }
+            else if (positionY > currentY)
+            {
+                nextYDown = -terrain.GetLength(1) + positionY;
+                nextYUp = positionY;
+            }
+
+            var distanceDown = nextYDown - currentY;
+            var distanceUp = nextYUp - currentY;
+
+            var distanceY = Math.Abs(distanceUp) < Math.Abs(distanceDown) ? distanceUp : distanceDown;
+
+            // Now you have a directed distance vector for both axis with the 
+            // minimal absolute distance from the player
+            return new int[] { distanceX, distanceY };
         }
     }
 
