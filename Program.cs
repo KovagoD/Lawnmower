@@ -14,8 +14,8 @@ namespace Lawnmower
         public int[] coordinates;
         public TerrainType terrainType;
         public bool isMowable() { return terrainType == TerrainType.Grass ? true : false; }
-
         public bool isMowed = false;
+
         public Terrain(TerrainType terrainType, int[] coordinates)
         {
             this.terrainType = terrainType;
