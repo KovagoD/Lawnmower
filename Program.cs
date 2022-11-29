@@ -19,7 +19,6 @@ namespace Lawnmower
             this.terrainType = terrainType;
             this.coordinates = coordinates;
         }
-
         public virtual (char appearance, ConsoleColor color, ConsoleColor bgColor) GetAppearance()
         {
             switch (terrainType)
@@ -44,10 +43,7 @@ namespace Lawnmower
         static int lastCoordIndex = 0;
         static int[] closestGrassCoordinates;
 
-        public Lawnmower(TerrainType terrainType, int[] coordinates) : base(terrainType, coordinates)
-        {
-        }
-
+        public Lawnmower(TerrainType terrainType, int[] coordinates) : base(terrainType, coordinates) { }
         public override (char appearance, ConsoleColor color, ConsoleColor bgColor) GetAppearance()
         {
             char appearanceChar = '↑';
@@ -139,7 +135,7 @@ namespace Lawnmower
                 {
                     for (int j = 0; j < availablePaths.Count; j++)
                     {
-                        if (Enumerable.SequenceEqual(lastCoordinates[i], availablePaths[j])) { lastCount++; }
+                        if (Enumerable.SequenceEqual(lastCoordinates[i], availablePaths[j])) lastCount++; 
                     }
                 }
                 if (availablePaths.Count > lastCount)
@@ -148,7 +144,7 @@ namespace Lawnmower
                     {
                         for (int j = 0; j < availablePaths.Count; j++)
                         {
-                            if (Enumerable.SequenceEqual(lastCoordinates[i], availablePaths[j])) { availablePaths.RemoveAt(j); }
+                            if (Enumerable.SequenceEqual(lastCoordinates[i], availablePaths[j])) availablePaths.RemoveAt(j);
                         }
                     }
                 }
@@ -171,12 +167,12 @@ namespace Lawnmower
 
             Console.WriteLine("\n\tLast {0} coordinates:", lastCoordinates.Length);
             string last = "\t";
-            foreach (var item in lastCoordinates) { last += "[" + item[0] + "," + item[1] + "] "; }
+            foreach (var item in lastCoordinates) last += "[" + item[0] + "," + item[1] + "] "; 
             Console.WriteLine(last);
 
             string available = "\t";
             Console.WriteLine("\n\tAvailable paths: ({0})", availablePaths.Count);
-            foreach (var item in availablePaths) { available += "[" + item[0] + "," + item[1] + "] "; }
+            foreach (var item in availablePaths)  available += "[" + item[0] + "," + item[1] + "] "; 
             Console.WriteLine(available);
 
             Console.WriteLine("\n\t- Selected path: " + path[0] + "," + path[1]);
@@ -191,7 +187,7 @@ namespace Lawnmower
             {
                 for (int y = 0; y < terrain.GetLength(1); y++)
                 {
-                    if (terrain[x, y].terrainType == TerrainType.Grass && !terrain[x, y].isMowed) { unmowedGrass.Add(terrain[x, y]); }
+                    if (terrain[x, y].terrainType == TerrainType.Grass && !terrain[x, y].isMowed) unmowedGrass.Add(terrain[x, y]);
                 }
             }
             Terrain closestGrass = null;
@@ -264,8 +260,8 @@ namespace Lawnmower
             Console.CursorVisible = false;
             string selectMarker = " -> ";
 
-            if (currentTerrain == null) { currentTerrain = GenerateTerrain(); }
-            if (mainTerrain == null) { mainTerrain = (Terrain[,])currentTerrain.Clone(); }
+            if (currentTerrain == null)  currentTerrain = GenerateTerrain(); 
+            if (mainTerrain == null)  mainTerrain = (Terrain[,])currentTerrain.Clone(); 
 
             do
             {
@@ -417,17 +413,17 @@ namespace Lawnmower
 
             Terrain[,] terrain = new Terrain[r.Next(minMapSize, maxMapSize), r.Next(minMapSize, maxMapSize)];
 
+            //Generate fence
             int xUpperBound = terrain.GetUpperBound(0);
             int yUpperBound = terrain.GetUpperBound(1);
 
-            //Generate fence
-            for (int y = 0; y <= terrain.GetUpperBound(1); y++)
+            for (int y = 0; y <= yUpperBound; y++)
             {
                 terrain[0, y] = new Terrain(TerrainType.Fence, new int[] { 0, y });
                 terrain[xUpperBound, y] = new Terrain(TerrainType.Fence, new int[] { xUpperBound, y });
             }
 
-            for (int x = 0; x <= terrain.GetUpperBound(0); x++)
+            for (int x = 0; x <= xUpperBound; x++)
             {
                 terrain[x, 0] = new Terrain(TerrainType.Fence, new int[] { x, 0 });
                 terrain[x, yUpperBound] = new Terrain(TerrainType.Fence, new int[] { x, yUpperBound });
@@ -468,8 +464,8 @@ namespace Lawnmower
             {
                 for (int y = 0; y < terrain.GetLength(1); y++)
                 {
-                    if (terrain[x, y].terrainType == TerrainType.Grass) { grassCount++; }
-                    else if (terrain[x, y].terrainType == TerrainType.Stone || terrain[x, y].terrainType == TerrainType.Tree) { obstacleCount++; }
+                    if (terrain[x, y].terrainType == TerrainType.Grass)  grassCount++; 
+                    else if (terrain[x, y].terrainType == TerrainType.Stone || terrain[x, y].terrainType == TerrainType.Tree)  obstacleCount++; 
                 }
             }
         }
@@ -543,7 +539,7 @@ namespace Lawnmower
                     lawnmower = lawnmower.Move(terrain, path);
                     stepCounter++;
                 }
-                else { isActive = false; }
+                else isActive = false; 
 
                 if (isManualStep && isActive)
                 {
@@ -551,7 +547,7 @@ namespace Lawnmower
                     Console.WriteLine("\t Press 'ESC' to stop the simulation.");
                     Console.ForegroundColor = ConsoleColor.White;
 
-                    if (Console.ReadKey(true).Key == ConsoleKey.Escape) { isActive = false; }
+                    if (Console.ReadKey(true).Key == ConsoleKey.Escape)  isActive = false; 
                 }
             } while (isActive);
 
