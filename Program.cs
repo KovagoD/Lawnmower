@@ -113,7 +113,7 @@ namespace Lawnmower
 
             closestGrassCoordinates = isDirectMovePossible ? closestGrassInRadius : FindClosestGrass(terrain);
             if (!availablePaths.Contains(closestGrassCoordinates) && isDirectMovePossible) availablePaths.Add(closestGrassCoordinates);
-            if (closestGrassCoordinates == null) { return null; }
+            if (closestGrassCoordinates == null) return null;
 
             if (!isDirectMovePossible)
             {
@@ -124,20 +124,21 @@ namespace Lawnmower
 
                 if (availablePaths.Count < 1)
                 {
-                    if (terrain[down[0], down[1]].isMowable()) { availablePaths.Add(down); }
-                    if (terrain[up[0], up[1]].isMowable()) { availablePaths.Add(up); }
-                    if (terrain[right[0], right[1]].isMowable()) { availablePaths.Add(right); }
-                    if (terrain[left[0], left[1]].isMowable()) { availablePaths.Add(left); }
-
+                    if (terrain[down[0], down[1]].isMowable()) availablePaths.Add(down);
+                    if (terrain[up[0], up[1]].isMowable()) availablePaths.Add(up);
+                    if (terrain[right[0], right[1]].isMowable()) availablePaths.Add(right);
+                    if (terrain[left[0], left[1]].isMowable()) availablePaths.Add(left);
                 }
+
                 int lastCount = 0;
                 for (int i = 0; i < lastCoordinates.Length; i++)
                 {
                     for (int j = 0; j < availablePaths.Count; j++)
                     {
-                        if (Enumerable.SequenceEqual(lastCoordinates[i], availablePaths[j])) lastCount++; 
+                        if (Enumerable.SequenceEqual(lastCoordinates[i], availablePaths[j])) lastCount++;
                     }
                 }
+
                 if (availablePaths.Count > lastCount)
                 {
                     for (int i = 0; i < lastCoordinates.Length; i++)
@@ -155,10 +156,10 @@ namespace Lawnmower
             int[] path = null;
             if (availablePaths != null) { path = isDirectMovePossible ? availablePaths[0] : availablePaths[r.Next(0, availablePaths.Count)]; }
 
-            if (path == down) { facingDirection = Direction.South; }
-            else if (path == up) { facingDirection = Direction.North; }
-            else if (path == right) { facingDirection = Direction.East; }
-            else if (path == left) { facingDirection = Direction.West; }
+            if (path == down) facingDirection = Direction.South;
+            else if (path == up) facingDirection = Direction.North;
+            else if (path == right) facingDirection = Direction.East;
+            else if (path == left) facingDirection = Direction.West;
 
             Console.WriteLine("\n\tFacing direction: " + facingDirection);
             Console.WriteLine("\t- Current position [{0},{1}]", coordinates[0], coordinates[1]);
@@ -167,12 +168,12 @@ namespace Lawnmower
 
             Console.WriteLine("\n\tLast {0} coordinates:", lastCoordinates.Length);
             string last = "\t";
-            foreach (var item in lastCoordinates) last += "[" + item[0] + "," + item[1] + "] "; 
+            foreach (var item in lastCoordinates) last += "[" + item[0] + "," + item[1] + "] ";
             Console.WriteLine(last);
 
             string available = "\t";
             Console.WriteLine("\n\tAvailable paths: ({0})", availablePaths.Count);
-            foreach (var item in availablePaths)  available += "[" + item[0] + "," + item[1] + "] "; 
+            foreach (var item in availablePaths) available += "[" + item[0] + "," + item[1] + "] ";
             Console.WriteLine(available);
 
             Console.WriteLine("\n\t- Selected path: " + path[0] + "," + path[1]);
@@ -260,8 +261,8 @@ namespace Lawnmower
             Console.CursorVisible = false;
             string selectMarker = " -> ";
 
-            if (currentTerrain == null)  currentTerrain = GenerateTerrain(); 
-            if (mainTerrain == null)  mainTerrain = (Terrain[,])currentTerrain.Clone(); 
+            if (currentTerrain == null) currentTerrain = GenerateTerrain();
+            if (mainTerrain == null) mainTerrain = (Terrain[,])currentTerrain.Clone();
 
             do
             {
@@ -342,12 +343,12 @@ namespace Lawnmower
                 switch (key)
                 {
                     case ConsoleKey.UpArrow:
-                        if (selectedOption > 0) { selectedOption--; }
-                        if (selectedOption == 4 && isNewMap) { selectedOption = 3; }
+                        if (selectedOption > 0) selectedOption--;
+                        if (selectedOption == 4 && isNewMap) selectedOption = 3;
                         break;
                     case ConsoleKey.DownArrow:
-                        if (selectedOption < 5) { selectedOption++; }
-                        if (selectedOption == 4 && isNewMap) { selectedOption = 5; }
+                        if (selectedOption < 5) selectedOption++;
+                        if (selectedOption == 4 && isNewMap) selectedOption = 5;
                         break;
                 }
             } while (key != ConsoleKey.Enter);
@@ -464,8 +465,8 @@ namespace Lawnmower
             {
                 for (int y = 0; y < terrain.GetLength(1); y++)
                 {
-                    if (terrain[x, y].terrainType == TerrainType.Grass)  grassCount++; 
-                    else if (terrain[x, y].terrainType == TerrainType.Stone || terrain[x, y].terrainType == TerrainType.Tree)  obstacleCount++; 
+                    if (terrain[x, y].terrainType == TerrainType.Grass) grassCount++;
+                    else if (terrain[x, y].terrainType == TerrainType.Stone || terrain[x, y].terrainType == TerrainType.Tree) obstacleCount++;
                 }
             }
         }
@@ -539,7 +540,7 @@ namespace Lawnmower
                     lawnmower = lawnmower.Move(terrain, path);
                     stepCounter++;
                 }
-                else isActive = false; 
+                else isActive = false;
 
                 if (isManualStep && isActive)
                 {
@@ -547,7 +548,7 @@ namespace Lawnmower
                     Console.WriteLine("\t Press 'ESC' to stop the simulation.");
                     Console.ForegroundColor = ConsoleColor.White;
 
-                    if (Console.ReadKey(true).Key == ConsoleKey.Escape)  isActive = false; 
+                    if (Console.ReadKey(true).Key == ConsoleKey.Escape) isActive = false;
                 }
             } while (isActive);
 
