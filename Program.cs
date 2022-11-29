@@ -121,10 +121,10 @@ namespace Lawnmower
 
             if (!isDirectMovePossible)
             {
-                if (closestGrassCoordinates[0] > currentX && terrain[down[0], down[1]].isMowable()) { availablePaths.Add(down); Console.WriteLine("-1-"); }
-                if (closestGrassCoordinates[0] < currentX && terrain[up[0], up[1]].isMowable()) { availablePaths.Add(up); Console.WriteLine("-2-"); }
-                if (closestGrassCoordinates[1] > currentY && terrain[right[0], right[1]].isMowable()) { availablePaths.Add(right); Console.WriteLine("-3-"); }
-                if (closestGrassCoordinates[1] < currentY && terrain[left[0], left[1]].isMowable()) { availablePaths.Add(left); Console.WriteLine("-4-"); }
+                if (closestGrassCoordinates[0] > currentX && terrain[down[0], down[1]].isMowable()) { availablePaths.Add(down); }
+                if (closestGrassCoordinates[0] < currentX && terrain[up[0], up[1]].isMowable()) { availablePaths.Add(up); }
+                if (closestGrassCoordinates[1] > currentY && terrain[right[0], right[1]].isMowable()) { availablePaths.Add(right); }
+                if (closestGrassCoordinates[1] < currentY && terrain[left[0], left[1]].isMowable()) { availablePaths.Add(left); }
 
                 if (availablePaths.Count < 1)
                 {
@@ -154,15 +154,6 @@ namespace Lawnmower
                 }
             }
 
-            Console.WriteLine("\n\tcurrent pos: " + coordinates[0] + "," + coordinates[1] + " closest pos: "
-                + closestGrassCoordinates[0] + "," + closestGrassCoordinates[1] +
-                " is direct move poss: " + isDirectMovePossible);
-
-            Console.WriteLine("\nlast coordinates paths: ({0})", lastCoordinates.Length);
-            foreach (var item in lastCoordinates) { Console.Write("[{0},{1}]", item[0], item[1]); }
-            Console.WriteLine("\navailable paths: ({0})", availablePaths.Count);
-            foreach (var item in availablePaths) { Console.Write("[{0},{1}]", item[0], item[1]); }
-
             Random r = new Random();
 
             int[] path = null;
@@ -172,7 +163,23 @@ namespace Lawnmower
             else if (path == up) { facingDirection = Direction.North; }
             else if (path == right) { facingDirection = Direction.East; }
             else if (path == left) { facingDirection = Direction.West; }
-            Console.WriteLine("\nfacing direction: " + facingDirection);
+
+            Console.WriteLine("\n\tFacing direction: " + facingDirection);
+            Console.WriteLine("\t- Current position [{0},{1}]", coordinates[0], coordinates[1]);
+            Console.WriteLine("\t- Closest position [{0},{1}]", closestGrassCoordinates[0], closestGrassCoordinates[1]);
+            Console.WriteLine("\t- Direct move possible: " + isDirectMovePossible);
+
+            Console.WriteLine("\n\tLast {0} coordinates:", lastCoordinates.Length);
+            string last = "\t";
+            foreach (var item in lastCoordinates) { last += "[" + item[0] + "," + item[1] + "] "; }
+            Console.WriteLine(last);
+
+            string available = "\t";
+            Console.WriteLine("\n\tAvailable paths: ({0})", availablePaths.Count);
+            foreach (var item in availablePaths) { available += "[" + item[0] + "," + item[1] + "] "; }
+            Console.WriteLine(available);
+
+            Console.WriteLine("\n\t- Selected path: " + path[0] + "," + path[1]);
 
             return path;
         }
@@ -203,77 +210,53 @@ namespace Lawnmower
         }
         public int GetDistance(Terrain[,] terrain, int[] x, int[] y)
         {
-            int x1 = x[0];
-            int x2 = x[1];
-
-            int y1 = y[0];
-            int y2 = y[1];
-
-            int nextXLeft = y1;
-            int nextXRight = y1;
-            if (x1 < y1)
+            int nextXLeft = y[0];
+            int nextXRight = y[0];
+            if (x[0] < y[0])
             {
-                nextXLeft = x1;
-                nextXRight = terrain.GetLength(0) + x1;
+                nextXLeft = x[0];
+                nextXRight = terrain.GetLength(0) + x[0];
             }
-            else if (x1 > y1)
+            else if (x[0] > y[0])
             {
-                nextXLeft = terrain.GetLength(0) + x1;
-                nextXRight = x1;
+                nextXLeft = terrain.GetLength(0) + x[0];
+                nextXRight = x[0];
             }
+            int distanceX = Math.Min(nextXLeft - y[0], nextXRight - y[0]);
 
-            int distanceLeft = nextXLeft - y1;
-            int distanceRight = nextXRight - y1;
-
-            // use the Absolute only for comparing which is shorter
-            int distanceX = Math.Abs(distanceRight) < Math.Abs(distanceLeft) ? distanceRight : distanceLeft;
-
-            // And finally we want the smallest of both possible distances
-            distanceX = Math.Min(distanceLeft, distanceRight);
-
-            // Repeat the same for the Y axis
-            int nextYDown = y2;
-            int nextYUp = y2;
-            if (x2 < y2)
+            int nextYDown = y[1];
+            int nextYUp = y[1];
+            if (x[1] < y[1])
             {
-                nextYDown = x2;
-                nextYUp = terrain.GetLength(1) + x2;
+                nextYDown = x[1];
+                nextYUp = terrain.GetLength(1) + x[1];
             }
-            else if (x2 > y2)
+            else if (x[1] > y[1])
             {
-                nextYDown = terrain.GetLength(1) + x2;
-                nextYUp = x2;
+                nextYDown = terrain.GetLength(1) + x[1];
+                nextYUp = x[1];
             }
-
-            int distanceDown = nextYDown - y2;
-            int distanceUp = nextYUp - y2;
-
-            int distanceY = Math.Abs(distanceUp) < Math.Abs(distanceDown) ? distanceUp : distanceDown;
-            distanceY = Math.Min(distanceUp, distanceDown);
+            int distanceY = Math.Min(nextYUp - y[1], nextYDown - y[1]);
 
             return Math.Abs(distanceX) + Math.Abs(distanceY);
-
         }
     }
 
     internal class Program
     {
-        static int obstacleCount = 0;
-        static int grassCount = 0;
         static Random r = new Random();
-
-        static MapType mapSize = MapType.Normal;
-        static Terrain[,] mainTerrain;
-        static int[] starterCoordinates;
+        static int selectedOption = 0;
 
         static bool isNewMap = true;
         static bool isStartFromSameCoords = true;
+        static MapType mapSize = MapType.Small;
+        static Terrain[,] mainTerrain;
+        static int[] starterCoordinates;
 
-        static int selectedOption = 0;
-        static void Main(string[] args)
-        {
-            Menu(mainTerrain);
-        }
+        static int obstacleCount = 0;
+        static int grassCount = 0;
+
+        static void Main(string[] args) { Menu(mainTerrain); }
 
         static void Menu(Terrain[,] currentTerrain)
         {
@@ -417,17 +400,17 @@ namespace Lawnmower
             {
                 case MapType.Small:
                     minMapSize = 7;
-                    maxMapSize = 10;
+                    maxMapSize = 11;
                     obstacleRate = 25;
                     break;
                 case MapType.Normal:
-                    minMapSize = 10;
-                    maxMapSize = 15;
+                    minMapSize = 11;
+                    maxMapSize = 16;
                     obstacleRate = 15;
                     break;
                 case MapType.Large:
-                    minMapSize = 15;
-                    maxMapSize = 20;
+                    minMapSize = 16;
+                    maxMapSize = 21;
                     obstacleRate = 30;
                     break;
             }
@@ -460,10 +443,13 @@ namespace Lawnmower
                     int chance = r.Next(0, 101);
                     TerrainType type = TerrainType.Grass;
 
-                    if (chance < obstacleRate && lastObstacleCoord[0] != x + 1 && lastObstacleCoord[0] != x - 1 && lastObstacleCoord[1] != y + 1 && lastObstacleCoord[1] != y - 1)
+                    if (lastObstacleCoord[0] != x + 1 && lastObstacleCoord[0] != x - 1 && lastObstacleCoord[1] != y + 1 && lastObstacleCoord[1] != y - 1)
                     {
-                        lastObstacleCoord = new int[] { x, y };
-                        type = (TerrainType)r.Next(1, 3);
+                        if (chance < obstacleRate)
+                        {
+                            lastObstacleCoord = new int[] { x, y };
+                            type = (TerrainType)r.Next(1, 3);
+                        }
                     }
 
                     terrain[x, y] = new Terrain(type, new int[] { x, y });
@@ -555,15 +541,14 @@ namespace Lawnmower
                 if (path != null)
                 {
                     lawnmower = lawnmower.Move(terrain, path);
-                    Console.WriteLine("\tA ---> B PATH: " + path[0] + "," + path[1]);
                     stepCounter++;
                 }
                 else { isActive = false; }
 
-                if (isManualStep)
+                if (isManualStep && isActive)
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine("\n\n Press 'ESC' to stop the simulation.");
+                    Console.WriteLine("\t Press 'ESC' to stop the simulation.");
                     Console.ForegroundColor = ConsoleColor.White;
 
                     if (Console.ReadKey(true).Key == ConsoleKey.Escape) { isActive = false; }
@@ -571,7 +556,7 @@ namespace Lawnmower
             } while (isActive);
 
             double optimalPath = 100 - (100 * (stepCounter - grassCount)) / grassCount;
-            Console.WriteLine("The path was {0:0.00}% optimal {1} grass, {2} obstacles in {3} steps", optimalPath, grassCount, obstacleCount, stepCounter);
+            Console.WriteLine("\n\tSimulation ended.\n\tThis path was {0:0.00}% optimal {1} grass in {2} steps", optimalPath, grassCount, stepCounter);
             Console.ReadKey();
             Menu(terrain);
         }
