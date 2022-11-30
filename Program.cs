@@ -4,8 +4,8 @@ using System.Linq;
 
 namespace Lawnmower
 {
-    public enum TerrainType { Grass = 0, Stone = 1, Tree = 2, Fence = 3, Lawnmower = 4 };
-    public enum Direction { South = 0, North = 1, East = 2, West = 3 };
+    public enum TerrainType { Grass, Stone, Tree, Fence, Lawnmower };
+    public enum Direction { South, North, East, West };
     public enum MapType { Small, Normal, Large }
     public class Terrain
     {
@@ -130,6 +130,7 @@ namespace Lawnmower
                     if (terrain[left[0], left[1]].isMowable()) availablePaths.Add(left);
                 }
 
+                #region remove last coordinates
                 int lastCount = 0;
                 for (int i = 0; i < lastCoordinates.Length; i++)
                 {
@@ -149,6 +150,7 @@ namespace Lawnmower
                         }
                     }
                 }
+                #endregion
             }
 
             Random r = new Random();
@@ -423,7 +425,7 @@ namespace Lawnmower
                 terrain[0, y] = new Terrain(TerrainType.Fence, new int[] { 0, y });
                 terrain[xUpperBound, y] = new Terrain(TerrainType.Fence, new int[] { xUpperBound, y });
             }
-
+            //same for x axis
             for (int x = 0; x <= xUpperBound; x++)
             {
                 terrain[x, 0] = new Terrain(TerrainType.Fence, new int[] { x, 0 });
@@ -477,8 +479,8 @@ namespace Lawnmower
             {
                 do
                 {
-                    int x = r.Next(1, terrain.GetLength(0) - 2);
-                    int y = r.Next(1, terrain.GetLength(1) - 2);
+                    int x = r.Next(1, terrain.GetLength(0) - 1);
+                    int y = r.Next(1, terrain.GetLength(1) - 1);
                     if (terrain[x, y].terrainType == TerrainType.Grass)
                     {
                         terrain[x, y] = new Lawnmower(TerrainType.Lawnmower, new int[] { x, y });
@@ -489,8 +491,25 @@ namespace Lawnmower
             }
             else
             {
-                terrain[starterCoordinates[0], starterCoordinates[1]] = new Lawnmower(TerrainType.Lawnmower, starterCoordinates);
-                return terrain[starterCoordinates[0], starterCoordinates[1]] as Lawnmower;
+                if (terrain[starterCoordinates[0], starterCoordinates[1]] != null)
+                {
+                    terrain[starterCoordinates[0], starterCoordinates[1]] = new Lawnmower(TerrainType.Lawnmower, starterCoordinates);
+                    return terrain[starterCoordinates[0], starterCoordinates[1]] as Lawnmower;
+                }
+                else
+                {
+                    do
+                    {
+                        int x = r.Next(1, terrain.GetLength(0) - 1);
+                        int y = r.Next(1, terrain.GetLength(1) - 1);
+                        if (terrain[x, y].terrainType == TerrainType.Grass)
+                        {
+                            terrain[x, y] = new Lawnmower(TerrainType.Lawnmower, new int[] { x, y });
+                            starterCoordinates = terrain[x, y].coordinates;
+                            return terrain[x, y] as Lawnmower;
+                        }
+                    } while (true);
+                }
             }
         }
 
